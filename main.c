@@ -6,13 +6,94 @@
 
 #include "lib/mpc.h"
 
-long eval_op(long x, char* op, long y);
+// create new language structure: lval
+// -----------------------------------
 
-long eval(mpc_ast_t* ast){
+// declares a new struct, lval
+typedef struct {
+  int type;
+  long num;
+  int err;
+} lval;
+
+// types in our system
+enum {LVAL_ERR, LVAL_NUM};
+// type of errors
+enum {LERR_DIV_ZERO, LERR_BAD_OP, LERR_BAD_NUM};
+
+// lval constructors
+// -----------------
+lval lval_num(long x){
+  lval v;
+  v.type = LVAL_NUM;
+  v.num = x;
+  return v;
+}
+
+// err should be of type enum LERR_*
+lval lval_err(int err){
+  lval v;
+  v.type = LVAL_ERR;
+  v.err = err;
+  return v;
+}
+
+void lval_print(lval v){
+  switch(v.type){
+    case LVAL_NUM:
+      printf("%li", v.num);
+      break;
+
+    case LVAL_ERR:
+      switch(v.err){
+        case LERR_DIV_ZERO:
+          printf("Divide by zero error");
+          break;
+        case LERR_BAD_OP:
+          printf("Invalid operator");
+          break;
+        case LERR_BAD_NUM:
+          printf("Invalid number");
+          break;
+      }
+    break;
+  }
+}
+
+void lval_println(lval v){
+  lval_print(v); putchar('\n');
+}
+
+// Evaluate the Abstract Syntax Tree
+// ---------------------------------
+
+lval eval_op(lval x, char* op, lval y){
+
+  if (x.type == LVAL_ERR) { return x;}
+  if (y.type == LVAL_ERR) { return y;}
+
+  // The implicit assumption is that x and y are type LVAL_NUM at this point
+
+
+
+  if (strcmp(op, "+") == 0) { return lval_num(x.num + y.num); }
+  if (strcmp(op, "*") == 0) { return lval_num(x.num * y.num); }
+  if (strcmp(op, "-") == 0) { return lval_num(x.num - y.num); }
+  if (strcmp(op, "/") == 0) {
+    return y.num == 0
+      ? lval_err(LERR_DIV_ZERO)
+      : lval_num(x.num / y.num);
+  }
+
+  return lval_err(LERR_BAD_OP);
+}
+
+lval eval(mpc_ast_t* ast){
 
   // numbers are evaluated as numbers
   if (strstr(ast->tag, "number")){
-    return atoi(ast->contents);
+    long n = atoi(ast->contents);
+    return lval_num(n);
   }
 
   // If an expression is not a number, it is an operator
@@ -20,7 +101,7 @@ long eval(mpc_ast_t* ast){
   char* op = ast->children[1]->contents;
 
   // The third child is the first expression for the operator
-  long x = eval(ast->children[2]);
+  lval x = eval(ast->children[2]);
 
   int i = 3;
   while(strstr(ast->children[i]->tag, "expr")){
@@ -31,15 +112,8 @@ long eval(mpc_ast_t* ast){
   return x;
 }
 
-long eval_op(long x, char* op, long y){
-  if (strcmp(op, "+") == 0) { return x + y; }
-  if (strcmp(op, "*") == 0) { return x * y; }
-  if (strcmp(op, "-") == 0) { return x - y; }
-  if (strcmp(op, "/") == 0) { return x / y; }
-
-  puts("Error parsing operator.");
-  return 0;
-}
+// main loop
+// ---------
 
 int main(int argc, char** argv){
 
@@ -76,9 +150,9 @@ int main(int argc, char** argv){
 
           // evaluate the AST
           mpc_ast_t* a = r.output;
-          long result = eval(a);
+          lval result = eval(a);
 
-          printf("%li\n", result);
+          lval_println(result);
           mpc_ast_delete(r.output);
         }else{
           mpc_err_print(r.error);
