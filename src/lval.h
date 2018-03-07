@@ -6,6 +6,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+// #include "lenv.h"
+
 // create new language structure: lval
 // -----------------------------------
 struct lval;
@@ -18,13 +20,23 @@ typedef lval*(*lbuiltin)(lenv*, lval*);
 
 // declares a new struct, lval
 struct lval {
+  // type
   int type;
+
+  // primitives
   long num;
   char* err;
   char* symbol;
+
+  // lists
   int count;
   struct lval** cell;
-  lbuiltin func;
+
+  // functions
+  lbuiltin builtin;
+  lval* formals;
+  lval* body;
+  lenv* func_scope;
 };
 // valid types of LVAL
 enum {
@@ -45,6 +57,7 @@ lval* lval_sym(char* sym);
 lval* lval_sexpr(void);
 lval* lval_qexpr(void);
 lval* lval_func(lbuiltin func);
+lval* lval_lambda(lval* formal, lval* body);
 
 //add, delete
 void lval_del(lval* v);
@@ -61,5 +74,8 @@ lval* lval_take(lval* v, int i);
 lval* lval_join(lval* x, lval* y);
 
 // eval
+lval* lval_eval(lenv* e, lval* v);
+lval* lval_eval_sexpr(lenv* e, lval* v);
+lval* lval_call(lenv* e, lval* f, lval* v);
 
 #endif

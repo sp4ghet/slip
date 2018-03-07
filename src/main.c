@@ -1,4 +1,4 @@
-#include <stdlib.h>
+  #include <stdlib.h>
 #include <stdio.h>
 
 #include <editline/readline.h>
@@ -54,6 +54,7 @@ lval* lval_eval(lenv* e, lval* v){
 }
 
 lval* lval_eval_sexpr(lenv* e, lval* v){
+
   // evaluate child expressions
   for(int i = 0; i < v->count; i++){
     v->cell[i] = lval_eval(e, v->cell[i]);
@@ -65,7 +66,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v){
   }
 
   // if it is an empty expression, return 0
-  if (v->count == 0){ return 0; }
+  if (v->count == 0){ return v; }
   // if it is a single expression, return the contents
   if (v->count == 1){ return lval_take(v, 0); }
 
@@ -78,9 +79,41 @@ lval* lval_eval_sexpr(lenv* e, lval* v){
   }
 
   // symbol (operator)
-  lval* result = f->func(e,v);
+  lval* result = lval_call(e, f, v);
   lval_del(f);
   return result;
+}
+
+lval* lval_call(lenv* e, lval* f, lval* v){
+  // if there is a builtin function, call it.
+  if(f->builtin != NULL){
+    return f->builtin(e, v);
+  }
+
+  // we need to check that no more than the suppliable arguments are supplied
+  // less is ok for currying
+  LASSERT(v, v->count <= f->formals->count,
+    "More arguments supplied than available in function.");
+
+  for(int i = 0; i < v->count; i++){
+    lval* symbol = lval_pop(f->formals, 0);
+    lval* bind  = lval_pop(v, 0);
+
+    lenv_put(f->func_scope, symbol, bind);
+    lval_del(symbol); lval_del(bind);
+  }
+
+  lval_del(v);
+
+  if(f->formals->count == 0){
+    puts("evaluating function");
+    f->func_scope->parent = e;
+
+    return builtin_eval(f->func_scope,
+      lval_add(lval_sexpr(), lval_copy(f->body)));
+  }else{
+    return lval_copy(f);
+  }
 }
 
 void lenv_add_builtin(lenv* e, char* sym, lbuiltin func){
@@ -97,6 +130,8 @@ void lenv_add_builtins(lenv* e){
   lenv_add_builtin(e, "tail", builtin_tail);
   lenv_add_builtin(e, "join", builtin_join);
   lenv_add_builtin(e, "def", builtin_def);
+  lenv_add_builtin(e, "let", builtin_put);
+  lenv_add_builtin(e, "\\", builtin_lambda);
 
   lenv_add_builtin(e, "+", builtin_add);
   lenv_add_builtin(e, "-", builtin_sub);

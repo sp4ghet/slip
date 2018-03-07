@@ -117,9 +117,18 @@ lval* builtin_div(lenv* e, lval* v){
   return builtin_op(e, v, "/");
 }
 
+// bind globally
 lval* builtin_def(lenv* e, lval* v){
+  return builtin_bind(e, v, "def");
+}
+// bind locally in function scope
+lval* builtin_put(lenv* e, lval* v){
+  return builtin_bind(e, v, "let");
+}
+
+lval* builtin_bind(lenv* e, lval* v, char* func){
   LASSERT(v, v->cell[0]->type == LVAL_QEXPR,
-    "First argument to `def` must be a q-expression, got: %s", ltype_name(v->cell[0]->type));
+    "First argument to `%s` must be a q-expression, got: %s", func, ltype_name(v->cell[0]->type));
 
   // first argument is a list of symbols
   lval* symbols = v->cell[0];
@@ -133,9 +142,29 @@ lval* builtin_def(lenv* e, lval* v){
     "Number of symbols does not match number of expressions");
 
   for (int i = 0; i < symbols->count; i++){
-    lenv_put(e, symbols->cell[i], v->cell[i+1]);
+    if(strcmp(func, "def") == 0){
+      lenv_def(e, symbols->cell[i], v->cell[i+1]);
+    }
+    if(strcmp(func, "let") == 0){
+      lenv_put(e, symbols->cell[i], v->cell[i+1]);
+    }
   }
 
   lval_del(v);
   return lval_sexpr();
+}
+
+lval* builtin_lambda(lenv* e, lval* v){
+  LASSERT(v, v->count == 2,
+    "Expected %s arguments, got: %s", 2, v->count);
+  LASSERT(v, v->cell[0]->type == LVAL_QEXPR,
+    "First argument to \\ needs to be %s, got: %s", LVAL_QEXPR, ltype_name(v->cell[0]->type));
+  LASSERT(v, v->cell[1]->type == LVAL_QEXPR,
+    "Second argument to \\ needs to be %s, got: %s", LVAL_QEXPR, ltype_name(v->cell[1]->type));
+
+  lval* formals = lval_pop(v, 0);
+  lval* body = lval_pop(v, 0);
+  lval_del(v);
+
+  return lval_lambda(formals, body);
 }
