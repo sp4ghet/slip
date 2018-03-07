@@ -95,7 +95,8 @@ lval* lval_call(lenv* e, lval* f, lval* v){
   LASSERT(v, v->count <= f->formals->count,
     "More arguments supplied than available in function.");
 
-  for(int i = 0; i < v->count; i++){
+  int args_count = v->count;
+  for(int i = 0; i < args_count; i++){
     lval* symbol = lval_pop(f->formals, 0);
     lval* bind  = lval_pop(v, 0);
 
@@ -106,7 +107,7 @@ lval* lval_call(lenv* e, lval* f, lval* v){
   lval_del(v);
 
   if(f->formals->count == 0){
-    puts("evaluating function");
+    
     f->func_scope->parent = e;
 
     return builtin_eval(f->func_scope,

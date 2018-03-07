@@ -158,9 +158,9 @@ lval* builtin_lambda(lenv* e, lval* v){
   LASSERT(v, v->count == 2,
     "Expected %s arguments, got: %s", 2, v->count);
   LASSERT(v, v->cell[0]->type == LVAL_QEXPR,
-    "First argument to \\ needs to be %s, got: %s", LVAL_QEXPR, ltype_name(v->cell[0]->type));
+    "First argument to \\ needs to be %s, got: %s", ltype_name(LVAL_QEXPR), ltype_name(v->cell[0]->type));
   LASSERT(v, v->cell[1]->type == LVAL_QEXPR,
-    "Second argument to \\ needs to be %s, got: %s", LVAL_QEXPR, ltype_name(v->cell[1]->type));
+    "Second argument to \\ needs to be %s, got: %s", ltype_name(LVAL_QEXPR), ltype_name(v->cell[1]->type));
 
   lval* formals = lval_pop(v, 0);
   lval* body = lval_pop(v, 0);

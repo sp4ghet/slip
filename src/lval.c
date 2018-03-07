@@ -127,6 +127,7 @@ lval* lval_copy(lval* v){
       if(v->builtin != NULL){
         x->builtin = v->builtin;
       }else{
+        x->builtin = NULL;
         x->func_scope = lenv_copy(v->func_scope);
         x->formals = lval_copy(v->formals);
         x->body = lval_copy(v->body);
