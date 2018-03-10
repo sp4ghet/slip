@@ -54,7 +54,7 @@ void lenv_put(lenv* e, lval* symbol, lval* value){
   for(int i = 0; i < e->count; i++){
     if(strcmp(e->symbols[i], symbol->symbol) == 0){
       lval_del(e->values[i]);
-      e->values[i] = value;
+      e->values[i] = lval_copy(value);
       return;
     }
   }

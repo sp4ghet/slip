@@ -25,6 +25,7 @@ struct lval {
 
   // primitives
   long num;
+  int truth;
   char* err;
   char* symbol;
 
@@ -45,7 +46,8 @@ enum {
   LVAL_SYM,
   LVAL_SEXPR,
   LVAL_QEXPR,
-  LVAL_FUNC
+  LVAL_FUNC,
+  LVAL_BOOL
 };
 
 char* ltype_name(int ltype);
@@ -58,6 +60,7 @@ lval* lval_sexpr(void);
 lval* lval_qexpr(void);
 lval* lval_func(lbuiltin func);
 lval* lval_lambda(lval* formal, lval* body);
+lval* lval_bool(int v);
 
 //add, delete
 void lval_del(lval* v);
@@ -77,5 +80,8 @@ lval* lval_join(lval* x, lval* y);
 lval* lval_eval(lenv* e, lval* v);
 lval* lval_eval_sexpr(lenv* e, lval* v);
 lval* lval_call(lenv* e, lval* f, lval* v);
+
+// bool
+lval* lval_eq(lval* a, lval* b);
 
 #endif

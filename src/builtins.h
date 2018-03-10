@@ -31,4 +31,15 @@ lval* builtin_put(lenv* e, lval* v);
 lval* builtin_bind(lenv* e, lval* v, char* func);
 lval* builtin_lambda(lenv* e, lval* v);
 
+lval* builtin_print(lenv* e, lval* v);
+
+lval* builtin_if(lenv* e, lval* v);
+lval* builtin_eq(lenv* e, lval* v);
+lval* builtin_not(lenv* e, lval* v);
+lval* builtin_greater(lenv* e, lval* v);
+lval* builtin_less(lenv* e, lval* v);
+lval* builtin_leq(lenv* e, lval* v);
+lval* builtin_geq(lenv* e, lval* v);
+
+
 #endif

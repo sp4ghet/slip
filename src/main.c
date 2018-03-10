@@ -21,9 +21,18 @@ lval* lval_read_num(mpc_ast_t* ast){
     lval_num(x) : lval_err("invalid number %s", ast->contents);
 }
 
+lval* lval_read_bool(mpc_ast_t* ast){
+  if(strstr(ast->contents, "True")){
+    return lval_bool(1);
+  }else{
+    return lval_bool(0);
+  }
+}
+
 lval* lval_read(mpc_ast_t* ast){
 
   if(strstr(ast->tag, "number")) {return lval_read_num(ast);}
+  if(strstr(ast->tag, "bool")){ return lval_read_bool(ast); }
   if(strstr(ast->tag, "symbol")) {return lval_sym(ast->contents);}
 
   lval* x = NULL;
@@ -107,7 +116,7 @@ lval* lval_call(lenv* e, lval* f, lval* v){
   lval_del(v);
 
   if(f->formals->count == 0){
-    
+
     f->func_scope->parent = e;
 
     return builtin_eval(f->func_scope,
@@ -133,6 +142,10 @@ void lenv_add_builtins(lenv* e){
   lenv_add_builtin(e, "def", builtin_def);
   lenv_add_builtin(e, "let", builtin_put);
   lenv_add_builtin(e, "\\", builtin_lambda);
+  lenv_add_builtin(e, "print", builtin_print);
+
+  lenv_add_builtin(e, "if", builtin_if);
+  lenv_add_builtin(e, "==", builtin_eq);
 
   lenv_add_builtin(e, "+", builtin_add);
   lenv_add_builtin(e, "-", builtin_sub);
@@ -145,6 +158,7 @@ void lenv_add_builtins(lenv* e){
 int main(int argc, char** argv){
 
     mpc_parser_t* Number    = mpc_new("number");
+    mpc_parser_t* Bool      = mpc_new("bool");
     mpc_parser_t* Symbol    = mpc_new("symbol");
     mpc_parser_t* SExpr     = mpc_new("sexpr");
     mpc_parser_t* QExpr     = mpc_new("qexpr");
@@ -155,13 +169,14 @@ int main(int argc, char** argv){
     mpca_lang(MPCA_LANG_DEFAULT,
             "                                               \
             number  : /-?[0-9]+/;                           \
-            symbol  : /[[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/;  \
+            bool    : \"True\" | \"False\";                     \
+            symbol  : /[[a-zA-Z0-9_+\\-*\\/\\\\=<>!&]+/;    \
             sexpr   : '(' <expr>* ')';                      \
             qexpr   : '{' <expr>* '}';                      \
-            expr    : <number> | <symbol> | <sexpr> | <qexpr>;\
+            expr    : <number> | <bool> | <symbol> | <sexpr> | <qexpr>;\
             slip    : /^/ <expr>* /$/;                      \
             ",
-            Number, Symbol, SExpr, QExpr, Expr, Slip);
+            Number, Bool, Symbol, SExpr, QExpr, Expr, Slip);
 
     puts("Slip version 0.0.0.0");
     puts("Press ctrl+c to exit");
@@ -197,7 +212,7 @@ int main(int argc, char** argv){
     }
 
     lenv_del(global);
-    mpc_cleanup(4, Number, Symbol, SExpr, QExpr, Expr, Slip);
+    mpc_cleanup(7, Number, Bool, Symbol, SExpr, QExpr, Expr, Slip);
 
     return 0;
 }

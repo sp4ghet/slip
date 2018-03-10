@@ -168,3 +168,45 @@ lval* builtin_lambda(lenv* e, lval* v){
 
   return lval_lambda(formals, body);
 }
+
+lval* builtin_print(lenv* e, lval* v){
+  lval_println(v);
+  return v;
+}
+
+lval* builtin_if(lenv* e, lval* v){
+  LASSERT(v, v->count == 3,
+    "`if` `predicate` then `a` else `b` missing arguments");
+
+  LASSERT(v, v->cell[0]->type == LVAL_BOOL,
+    "`predicate` needs to be of type %s, got: %s", ltype_name(LVAL_BOOL), ltype_name(v->cell[0]->type));
+
+  lval* pred = lval_pop(v, 0);
+
+  lval* branch;
+
+  if(pred->truth){
+    branch = lval_take(v, 0);
+  }else{
+    branch =  lval_take(v, 1);
+  }
+
+  branch->type = LVAL_SEXPR;
+  return lval_eval(e, branch);
+}
+
+lval* builtin_eq(lenv* e, lval* v){
+  LASSERT(v, v->count == 2,
+    "Too many arguments supplied to `==`, expected 2, got: %s", v->count);
+
+  lval* a = lval_pop(v, 0);
+  lval* b = lval_take(v, 0);
+
+  return lval_eq(a, b);
+}
+
+lval* builtin_not(lenv* e, lval* v);
+lval* builtin_greater(lenv* e, lval* v);
+lval* builtin_less(lenv* e, lval* v);
+lval* builtin_leq(lenv* e, lval* v);
+lval* builtin_geq(lenv* e, lval* v);

@@ -2,6 +2,7 @@
 
 char* ltype_name(int ltype){
   switch(ltype){
+    case LVAL_BOOL: return "boolean";
     case LVAL_ERR: return "error";
     case LVAL_NUM: return "number";
     case LVAL_SYM: return "symbol";
@@ -67,6 +68,14 @@ lval* lval_func(lbuiltin func){
   return v;
 }
 
+lval* lval_bool(int b){
+  lval* v = malloc(sizeof(lval));
+  v->type = LVAL_BOOL;
+  v->truth = b ? 1 : 0;
+
+  return v;
+}
+
 
 lval* lval_lambda(lval* formals, lval* body){
   lval* v = malloc(sizeof(lval));
@@ -83,6 +92,7 @@ lval* lval_lambda(lval* formals, lval* body){
 // delte, add, other operations to lval
 void lval_del(lval* v){
   switch(v->type){
+    case LVAL_BOOL:
     case LVAL_NUM: break;
     case LVAL_FUNC:
       if(v->builtin == NULL){
@@ -123,6 +133,7 @@ lval* lval_copy(lval* v){
 
   switch(v->type){
     case LVAL_NUM: x->num = v->num; break;
+    case LVAL_BOOL: x->truth = v->truth; break;
     case LVAL_FUNC:
       if(v->builtin != NULL){
         x->builtin = v->builtin;
@@ -197,6 +208,8 @@ void lval_expr_print(lval* v, char open, char close){
 
 void lval_print(lval* v){
   switch(v->type){
+    case LVAL_BOOL:
+      printf(v->truth ? "True" : "False"); break;
     case LVAL_NUM:
       printf("%li", v->num); break;
     case LVAL_ERR:
@@ -218,4 +231,42 @@ void lval_print(lval* v){
 
 void lval_println(lval* v){
   lval_print(v); putchar('\n');
+}
+
+lval* lval_eq(lval* a, lval* b){
+  int is_equal;
+
+  if(a->type != b->type){
+    is_equal =  0;
+  }
+
+  switch(a->type){
+    case LVAL_NUM:
+      is_equal = (a->num == b->num);
+      break;
+    case LVAL_BOOL:
+      is_equal = (a->truth == b->truth);
+      break;
+    case LVAL_SYM:
+      is_equal = (strstr(a->symbol, b->symbol));
+      break;
+    case LVAL_FUNC:
+      is_equal = lval_eq(a->formals, b->formals)->truth &&
+        lval_eq(a->body, b->body)->truth;
+      break;
+    case LVAL_SEXPR:
+    case LVAL_QEXPR:
+      if(a->count != b->count){ is_equal = 0; break; }
+
+      for(int i = 0; i < a->count; i++){
+        is_equal = is_equal && lval_eq(a->cell[i], b->cell[i])->truth;
+        if(!is_equal){break;}
+      }
+    break;
+    default:
+      return lval_err("Uncomparable type");
+      break;
+  }
+
+  return lval_bool(is_equal);
 }
