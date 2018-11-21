@@ -170,8 +170,12 @@ lval* builtin_lambda(lenv* e, lval* v){
 }
 
 lval* builtin_print(lenv* e, lval* v){
-  lval_println(v);
-  return v;
+  LASSERT(v, v->count == 1,
+    "can only print 1 thing");
+
+  lval* obj = lval_take(v, 0);
+  lval_println(obj);
+  return obj;
 }
 
 lval* builtin_if(lenv* e, lval* v){
